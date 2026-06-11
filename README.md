@@ -71,3 +71,8 @@ export default defineConfig([
   },
 ])
 ```
+
+
+## Deployments
+
+- Netlify: [nobilmove-dashboard.netlify.app](https://nobilmove-dashboard.netlify.app)
