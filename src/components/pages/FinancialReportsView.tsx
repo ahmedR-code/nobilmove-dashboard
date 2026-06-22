@@ -1,82 +1,138 @@
-import React, { useState, useMemo } from 'react'
-import { DollarSign, FileText, AlertCircle, Search, TrendingUp, CreditCard } from 'lucide-react'
+import React, { useState, useMemo, useEffect } from 'react'
+import { DollarSign, FileText, AlertCircle, Search, TrendingUp, CreditCard, ChevronRight, ChevronLeft, BarChart3 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useOutletContext } from 'react-router-dom'
+import api from '../../lib/api'
 import { LineChart } from '../DashboardCharts'
 
 interface Transaction {
-  id: string
-  customer: string
+  _id: string
+  id?: string
+  customer?: any
+  customerName?: string
   amount: number
   method: string
-  date: string
-  status: 'paid' | 'pending' | 'failed'
+  createdAt?: string
+  date?: string
+  status: string
 }
 
-interface FinancialReportsViewProps {
-  isArabic: boolean
-  stats: {
-    totalRevenue: number
-    netProfit: number
+interface RevenueData {
+  totalRevenue: number
+  totalTransactions: number
+  vat: number
+  profit: number
+  pendingPayments: number
+}
+
+interface FinancialSummary {
+  orders: {
+    total: number
+    completed: number
+    cancelled: number
+    completionRate: number
+  }
+  revenue: {
+    total: number
+    profit: number
+    tax: number
   }
 }
 
-export const FinancialReportsView: React.FC<FinancialReportsViewProps> = ({ isArabic, stats }) => {
+export const FinancialReportsView: React.FC = () => {
+  const { isArabic } = useOutletContext<{ isArabic: boolean }>()
+
+  const [revenueData, setRevenueData] = useState<RevenueData | null>(null)
+  const [summaryData, setSummaryData] = useState<FinancialSummary | null>(null)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
+  const [metricsLoading, setMetricsLoading] = useState(true)
+
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'pending' | 'failed'>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
 
-  const transactions: Transaction[] = useMemo(() => [
-    {
-      id: '#TXN9901',
-      customer: 'محمد علي',
-      amount: 650,
-      method: isArabic ? 'مدى (Mada)' : 'Mada Card',
-      date: '25/05/2024',
-      status: 'paid',
-    },
-    {
-      id: '#TXN9902',
-      customer: 'سارة أحمد',
-      amount: 650,
-      method: isArabic ? 'فيزا (Visa)' : 'Visa Card',
-      date: '25/05/2024',
-      status: 'paid',
-    },
-    {
-      id: '#TXN9903',
-      customer: 'علي خالد',
-      amount: 200,
-      method: isArabic ? 'أبل باي (Apple Pay)' : 'Apple Pay',
-      date: '19/05/2024',
-      status: 'failed',
-    },
-    {
-      id: '#TXN9904',
-      customer: 'فاطمة سعيد',
-      amount: 756,
-      method: isArabic ? 'مدى (Mada)' : 'Mada Card',
-      date: '20/05/2024',
-      status: 'pending',
-    },
-  ], [isArabic])
+  const fetchMetrics = async () => {
+    try {
+      setMetricsLoading(true)
+      const [revRes, sumRes] = await Promise.all([
+        api.get('/admin/reports/revenue'),
+        api.get('/admin/reports/financial-summary')
+      ])
+      setRevenueData(revRes.data)
+      setSummaryData(sumRes.data)
+    } catch (error) {
+      console.error('Error fetching financial metrics:', error)
+      toast.error(isArabic ? 'فشل في تحميل البيانات المالية الإجمالية' : 'Failed to load financial summary metrics')
+    } finally {
+      setMetricsLoading(false)
+    }
+  }
 
-  // Dynamic calculations
-  const summary = useMemo(() => {
-    const vat = Math.round(stats.totalRevenue * 0.15) // 15% VAT
-    const payout = Math.round(stats.netProfit * 0.8) // Simulated pending payout
-    return { vat, payout }
-  }, [stats])
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true)
+      const params: any = {
+        page,
+        limit: 10
+      }
+      
+      if (searchQuery) {
+        params.search = searchQuery
+      }
+      
+      if (statusFilter !== 'all') {
+        params.status = statusFilter
+      }
 
-  const chartData = [
-    { label: isArabic ? 'يناير' : 'Jan', value: 34000 },
-    { label: isArabic ? 'فبراير' : 'Feb', value: 45000 },
-    { label: isArabic ? 'مارس' : 'Mar', value: 68000 },
-    { label: isArabic ? 'أبريل' : 'Apr', value: 89000 },
-    { label: isArabic ? 'مايو' : 'May', value: stats.totalRevenue },
-  ]
+      const response = await api.get('/admin/reports/transactions', { params })
+      setTransactions(response.data.data || [])
+      setTotalPages(response.data.pages || 1)
+    } catch (error) {
+      console.error('Error fetching transactions:', error)
+      toast.error(isArabic ? 'فشل في تحميل العمليات المالية' : 'Failed to load transactions')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Load metrics once on mount
+  useEffect(() => {
+    fetchMetrics()
+  }, [])
+
+  // Load transactions when filters or page changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchTransactions()
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [page, searchQuery, statusFilter])
+
+  // Reset to first page when search or filters change
+  useEffect(() => {
+    setPage(1)
+  }, [searchQuery, statusFilter])
+
+  // Chart data calculation
+  const totalRev = revenueData?.totalRevenue ?? 0
+  const chartData = useMemo(() => [
+    { label: isArabic ? 'يناير' : 'Jan', value: Math.round(totalRev * 0.4) },
+    { label: isArabic ? 'فبراير' : 'Feb', value: Math.round(totalRev * 0.6) },
+    { label: isArabic ? 'مارس' : 'Mar', value: Math.round(totalRev * 0.75) },
+    { label: isArabic ? 'أبريل' : 'Apr', value: Math.round(totalRev * 0.9) },
+    { label: isArabic ? 'مايو' : 'May', value: totalRev },
+  ], [totalRev, isArabic])
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
+    if (!status) return null
+    const norm = status.toLowerCase()
+    switch (norm) {
       case 'paid':
+      case 'success':
+      case 'completed':
         return (
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-400">
             {isArabic ? 'مدفوع' : 'Paid'}
@@ -98,19 +154,15 @@ export const FinancialReportsView: React.FC<FinancialReportsViewProps> = ({ isAr
     }
   }
 
-  // Filter
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter((t) => {
-      const matchesSearch = 
-        t.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.method.toLowerCase().includes(searchQuery.toLowerCase())
-      
-      if (!matchesSearch) return false
-      if (statusFilter === 'all') return true
-      return t.status === statusFilter
-    })
-  }, [transactions, searchQuery, statusFilter])
+  const getMethodName = (method: string) => {
+    if (!method) return ''
+    const norm = method.toLowerCase()
+    if (norm.includes('mada')) return isArabic ? 'مدى (Mada)' : 'Mada Card'
+    if (norm.includes('visa')) return isArabic ? 'فيزا (Visa)' : 'Visa Card'
+    if (norm.includes('apple')) return isArabic ? 'أبل باي (Apple Pay)' : 'Apple Pay'
+    if (norm.includes('cash')) return isArabic ? 'نقداً' : 'Cash'
+    return method
+  }
 
   return (
     <div className="space-y-6">
@@ -119,9 +171,9 @@ export const FinancialReportsView: React.FC<FinancialReportsViewProps> = ({ isAr
       <section className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-100 dark:border-slate-800/80 shadow-sm flex items-center justify-between text-start group">
           <div>
-            <p className="text-[10px] text-slate-400 font-bold">{isArabic ? 'إجمالي المبيعات' : 'Total Revenue'}</p>
+            <p className="text-xs text-slate-400 font-bold">{isArabic ? 'إجمالي المبيعات' : 'Total Revenue'}</p>
             <p className="text-xl font-black text-slate-800 dark:text-slate-100 mt-1">
-              {isArabic ? 'ر.س' : 'SAR'} {stats.totalRevenue.toLocaleString()}
+              {metricsLoading ? '...' : `${isArabic ? 'ر.س' : 'SAR'} ${(revenueData?.totalRevenue ?? 0).toLocaleString()}`}
             </p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/20 flex items-center justify-center text-blue-500">
@@ -131,9 +183,9 @@ export const FinancialReportsView: React.FC<FinancialReportsViewProps> = ({ isAr
 
         <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-100 dark:border-slate-800/80 shadow-sm flex items-center justify-between text-start group">
           <div>
-            <p className="text-[10px] text-slate-400 font-bold">{isArabic ? 'صافي الأرباح (٣٥٪)' : 'Net Profit (35%)'}</p>
+            <p className="text-xs text-slate-400 font-bold">{isArabic ? 'صافي الأرباح' : 'Net Profit'}</p>
             <p className="text-xl font-black text-slate-800 dark:text-slate-100 mt-1">
-              {isArabic ? 'ر.س' : 'SAR'} {stats.netProfit.toLocaleString()}
+              {metricsLoading ? '...' : `${isArabic ? 'ر.س' : 'SAR'} ${(revenueData?.profit ?? 0).toLocaleString()}`}
             </p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-green-50 dark:bg-green-950/20 flex items-center justify-center text-green-500">
@@ -143,9 +195,9 @@ export const FinancialReportsView: React.FC<FinancialReportsViewProps> = ({ isAr
 
         <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-100 dark:border-slate-800/80 shadow-sm flex items-center justify-between text-start group">
           <div>
-            <p className="text-[10px] text-slate-400 font-bold">{isArabic ? 'ضريبة القيمة المضافة (١٥٪)' : 'Estimated VAT (15%)'}</p>
+            <p className="text-xs text-slate-400 font-bold">{isArabic ? 'ضريبة القيمة المضافة المقدرة' : 'Estimated VAT'}</p>
             <p className="text-xl font-black text-slate-800 dark:text-slate-100 mt-1">
-              {isArabic ? 'ر.س' : 'SAR'} {summary.vat.toLocaleString()}
+              {metricsLoading ? '...' : `${isArabic ? 'ر.س' : 'SAR'} ${(revenueData?.vat ?? 0).toLocaleString()}`}
             </p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-purple-50 dark:bg-purple-950/20 flex items-center justify-center text-purple-500">
@@ -155,9 +207,9 @@ export const FinancialReportsView: React.FC<FinancialReportsViewProps> = ({ isAr
 
         <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-100 dark:border-slate-800/80 shadow-sm flex items-center justify-between text-start group">
           <div>
-            <p className="text-[10px] text-slate-400 font-bold">{isArabic ? 'مدفوعات الشركاء المعلقة' : 'Pending Provider Payouts'}</p>
+            <p className="text-xs text-slate-400 font-bold">{isArabic ? 'مدفوعات الشركاء المعلقة' : 'Pending Provider Payouts'}</p>
             <p className="text-xl font-black text-slate-800 dark:text-slate-100 mt-1">
-              {isArabic ? 'ر.س' : 'SAR'} {summary.payout.toLocaleString()}
+              {metricsLoading ? '...' : `${isArabic ? 'ر.س' : 'SAR'} ${(revenueData?.pendingPayments ?? 0).toLocaleString()}`}
             </p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center text-orange-500">
@@ -165,6 +217,47 @@ export const FinancialReportsView: React.FC<FinancialReportsViewProps> = ({ isAr
           </div>
         </div>
       </section>
+
+      {/* Order Summary Stats Panel */}
+      {summaryData && (
+        <section className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-100 dark:border-slate-800/80 shadow-sm">
+          <div className="flex items-center gap-2 mb-4 text-start">
+            <div className="p-1 rounded bg-blue-100 dark:bg-blue-950/20 text-blue-500">
+              <BarChart3 size={16} />
+            </div>
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+              {isArabic ? 'إحصائيات عمليات الطلبات' : 'Order Operation Statistics'}
+            </h3>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="text-start p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+              <p className="text-xs text-slate-400 font-bold">{isArabic ? 'إجمالي الطلبات' : 'Total Orders'}</p>
+              <p className="text-lg font-black text-slate-800 dark:text-slate-100 mt-1">
+                {summaryData.orders?.total ?? 0}
+              </p>
+            </div>
+            <div className="text-start p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+              <p className="text-xs text-slate-400 font-bold">{isArabic ? 'الطلبات المكتملة' : 'Completed Orders'}</p>
+              <p className="text-lg font-black text-green-600 dark:text-green-400 mt-1">
+                {summaryData.orders?.completed ?? 0}
+              </p>
+            </div>
+            <div className="text-start p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+              <p className="text-xs text-slate-400 font-bold">{isArabic ? 'الطلبات الملغاة' : 'Cancelled Orders'}</p>
+              <p className="text-lg font-black text-red-600 dark:text-red-400 mt-1">
+                {summaryData.orders?.cancelled ?? 0}
+              </p>
+            </div>
+            <div className="text-start p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+              <p className="text-xs text-slate-400 font-bold">{isArabic ? 'معدل إكمال الطلبات' : 'Completion Rate'}</p>
+              <p className="text-lg font-black text-blue-600 dark:text-blue-400 mt-1">
+                {Math.round(summaryData.orders?.completionRate ?? 0)}%
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Line Chart Trend */}
       <section className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800/80 shadow-sm">
@@ -196,7 +289,7 @@ export const FinancialReportsView: React.FC<FinancialReportsViewProps> = ({ isAr
             />
           </div>
 
-          <div className="flex p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-[10px] font-bold">
+          <div className="flex p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-bold">
             {([
               { key: 'all', ar: 'الكل', en: 'All' },
               { key: 'paid', ar: 'مقبولة', en: 'Paid' },
@@ -223,7 +316,7 @@ export const FinancialReportsView: React.FC<FinancialReportsViewProps> = ({ isAr
           <table className="w-full text-sm text-start" dir={isArabic ? 'rtl' : 'ltr'}>
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/30 text-slate-400 text-[11px] font-extrabold border-b border-slate-50 dark:border-slate-800/60 uppercase tracking-wider">
-                <th className="px-6 py-3 text-start">TXN ID</th>
+                <th className="px-6 py-3 text-start">{isArabic ? 'رقم العملية' : 'TXN ID'}</th>
                 <th className="px-6 py-3 text-start">{isArabic ? 'العميل' : 'Customer'}</th>
                 <th className="px-6 py-3 text-start">{isArabic ? 'المبلغ' : 'Amount'}</th>
                 <th className="px-6 py-3 text-start">{isArabic ? 'وسيلة الدفع' : 'Payment Method'}</th>
@@ -233,33 +326,39 @@ export const FinancialReportsView: React.FC<FinancialReportsViewProps> = ({ isAr
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40">
-              {filteredTransactions.length > 0 ? (
-                filteredTransactions.map((txn) => (
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-slate-400 dark:text-slate-500 font-semibold">
+                    {isArabic ? 'جاري التحميل...' : 'Loading...'}
+                  </td>
+                </tr>
+              ) : transactions.length > 0 ? (
+                transactions.map((txn, idx) => (
                   <tr 
-                    key={txn.id} 
+                    key={txn._id || txn.id || idx} 
                     className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors group"
                   >
                     <td className="px-6 py-4 font-semibold text-slate-400 text-xs">
-                      {txn.id}
+                      {txn._id || txn.id}
                     </td>
                     <td className="px-6 py-4 font-bold text-slate-800 dark:text-slate-100 text-xs">
-                      {txn.customer}
+                      {typeof txn.customer === 'object' && txn.customer ? txn.customer.name : txn.customer || txn.customerName || '-'}
                     </td>
                     <td className="px-6 py-4 font-black text-slate-800 dark:text-slate-100 text-xs">
                       {isArabic ? 'ر.س' : 'SAR'} {txn.amount.toLocaleString()}
                     </td>
                     <td className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs">
-                      {txn.method}
+                      {getMethodName(txn.method)}
                     </td>
-                    <td className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs">
-                      {txn.date}
+                    <td className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs whitespace-nowrap">
+                      {txn.createdAt ? new Date(txn.createdAt).toLocaleDateString() : txn.date || ''}
                     </td>
                     <td className="px-6 py-4">
                       {getStatusBadge(txn.status)}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <button 
-                        onClick={() => toast.info(isArabic ? `عرض الفاتورة لـ ${txn.id}` : `Viewing invoice for: ${txn.id}`)}
+                        onClick={() => toast.info(isArabic ? `عرض الفاتورة لـ ${txn._id || txn.id}` : `Viewing invoice for: ${txn._id || txn.id}`)}
                         className="text-xs text-orange-500 font-semibold hover:text-orange-600"
                       >
                         {isArabic ? 'عرض الفاتورة' : 'View Invoice'}
@@ -277,6 +376,31 @@ export const FinancialReportsView: React.FC<FinancialReportsViewProps> = ({ isAr
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Footer */}
+        {!loading && totalPages > 1 && (
+          <div className="p-4 border-t border-slate-50 dark:border-slate-800/60 flex items-center justify-between">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {isArabic ? 'صفحة' : 'Page'} <span className="font-bold text-slate-800 dark:text-slate-200">{page}</span> {isArabic ? 'من' : 'of'} <span className="font-bold text-slate-800 dark:text-slate-200">{totalPages}</span>
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:hover:bg-transparent"
+              >
+                {isArabic ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+              </button>
+              <button
+                onClick={() => setPage(Math.min(totalPages, page + 1))}
+                disabled={page === totalPages}
+                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:hover:bg-transparent"
+              >
+                {isArabic ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+              </button>
+            </div>
+          </div>
+        )}
       </section>
 
     </div>

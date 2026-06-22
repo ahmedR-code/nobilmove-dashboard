@@ -138,7 +138,7 @@ export const SupportHelpView: React.FC<SupportHelpViewProps> = ({ isArabic }) =>
             <AlertCircle size={16} />
           </div>
           <div>
-            <p className="text-[10px] text-slate-400 font-bold">{isArabic ? 'تذاكر جديدة/مفتوحة' : 'Open Tickets'}</p>
+            <p className="text-xs text-slate-400 font-bold">{isArabic ? 'تذاكر جديدة/مفتوحة' : 'Open Tickets'}</p>
             <p className="text-base font-black text-slate-800 dark:text-slate-100 mt-0.5">{stats.open}</p>
           </div>
         </div>
@@ -148,7 +148,7 @@ export const SupportHelpView: React.FC<SupportHelpViewProps> = ({ isArabic }) =>
             <MessageSquare size={16} />
           </div>
           <div>
-            <p className="text-[10px] text-slate-400 font-bold">{isArabic ? 'تذاكر قيد المعالجة' : 'Under Review'}</p>
+            <p className="text-xs text-slate-400 font-bold">{isArabic ? 'تذاكر قيد المعالجة' : 'Under Review'}</p>
             <p className="text-base font-black text-slate-800 dark:text-slate-100 mt-0.5">{stats.inProgress}</p>
           </div>
         </div>
@@ -158,7 +158,7 @@ export const SupportHelpView: React.FC<SupportHelpViewProps> = ({ isArabic }) =>
             <CheckCircle size={16} />
           </div>
           <div>
-            <p className="text-[10px] text-slate-400 font-bold">{isArabic ? 'تذاكر محلولة' : 'Resolved Helpdesk'}</p>
+            <p className="text-xs text-slate-400 font-bold">{isArabic ? 'تذاكر محلولة' : 'Resolved Helpdesk'}</p>
             <p className="text-base font-black text-slate-800 dark:text-slate-100 mt-0.5">{stats.resolved}</p>
           </div>
         </div>
@@ -182,7 +182,7 @@ export const SupportHelpView: React.FC<SupportHelpViewProps> = ({ isArabic }) =>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-[10px] font-bold">
+            <div className="flex p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-bold">
               {([
                 { key: 'all', ar: 'الكل', en: 'All' },
                 { key: 'open', ar: 'جديدة', en: 'Open' },
@@ -244,7 +244,7 @@ export const SupportHelpView: React.FC<SupportHelpViewProps> = ({ isArabic }) =>
                       {ticket.subject}
                     </td>
                     <td className="px-6 py-4 text-xs">
-                      <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold ${getPriorityBadgeColor(ticket.priority)}`}>
+                      <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold ${getPriorityBadgeColor(ticket.priority)}`}>
                         {translatePriority(ticket.priority)}
                       </span>
                     </td>

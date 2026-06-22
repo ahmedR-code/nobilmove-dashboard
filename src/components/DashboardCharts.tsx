@@ -76,7 +76,7 @@ export const LineChart: React.FC<LineChartProps> = ({ data, color = '#f97316' })
                 x={paddingLeft - 10}
                 y={y + 4}
                 textAnchor="end"
-                className="text-[10px] fill-slate-400 font-sans"
+                className="text-xs fill-slate-400 font-sans"
               >
                 {tick >= 1000 ? `${tick / 1000}K` : tick}
               </text>
@@ -138,7 +138,7 @@ export const LineChart: React.FC<LineChartProps> = ({ data, color = '#f97316' })
             x={p.x}
             y={height - 15}
             textAnchor="middle"
-            className="text-[10px] fill-slate-400 font-sans"
+            className="text-xs fill-slate-400 font-sans"
           >
             {p.label}
           </text>
@@ -155,7 +155,7 @@ export const LineChart: React.FC<LineChartProps> = ({ data, color = '#f97316' })
           }}
         >
           <div className="font-semibold text-center">{points[hoveredIndex].label}</div>
-          <div className="text-[10px] text-orange-400 text-center font-bold mt-0.5">
+          <div className="text-xs text-orange-400 text-center font-bold mt-0.5">
             ر.س {points[hoveredIndex].value.toLocaleString()}
           </div>
         </div>
@@ -228,7 +228,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({ slices, totalCount }) =>
           <div className="flex flex-col items-center justify-center w-full h-full select-none">
             {hoveredSlice !== null ? (
               <>
-                <span className="text-[10px] text-slate-400 font-sans text-center truncate w-full px-1">
+                <span className="text-xs text-slate-400 font-sans text-center truncate w-full px-1">
                   {slices[hoveredSlice].label}
                 </span>
                 <span className="text-base font-bold text-slate-700 font-sans mt-0.5">
@@ -237,7 +237,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({ slices, totalCount }) =>
               </>
             ) : (
               <>
-                <span className="text-[10px] text-slate-400 font-sans text-center leading-none">
+                <span className="text-xs text-slate-400 font-sans text-center leading-none">
                   إجمالي الطلبات
                 </span>
                 <span className="text-base font-bold text-slate-700 font-sans mt-1">

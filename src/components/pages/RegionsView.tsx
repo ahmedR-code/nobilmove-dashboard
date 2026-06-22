@@ -121,7 +121,7 @@ export const RegionsView: React.FC<RegionsViewProps> = ({ isArabic }) => {
             <Compass size={16} />
           </div>
           <div>
-            <p className="text-[10px] text-slate-400 font-bold">{isArabic ? 'إجمالي المناطق' : 'Total Coverage Areas'}</p>
+            <p className="text-xs text-slate-400 font-bold">{isArabic ? 'إجمالي المناطق' : 'Total Coverage Areas'}</p>
             <p className="text-base font-black text-slate-800 dark:text-slate-100 mt-0.5">{summary.total}</p>
           </div>
         </div>
@@ -130,7 +130,7 @@ export const RegionsView: React.FC<RegionsViewProps> = ({ isArabic }) => {
             <MapPin size={16} />
           </div>
           <div>
-            <p className="text-[10px] text-slate-400 font-bold">{isArabic ? 'المناطق المغطاة بالكامل' : 'Fully Covered Regions'}</p>
+            <p className="text-xs text-slate-400 font-bold">{isArabic ? 'المناطق المغطاة بالكامل' : 'Fully Covered Regions'}</p>
             <p className="text-base font-black text-slate-800 dark:text-slate-100 mt-0.5">{summary.fullyCovered}</p>
           </div>
         </div>
@@ -139,7 +139,7 @@ export const RegionsView: React.FC<RegionsViewProps> = ({ isArabic }) => {
             <Activity size={16} />
           </div>
           <div>
-            <p className="text-[10px] text-slate-400 font-bold">{isArabic ? 'الطلبات الجارية بالمناطق' : 'Total Active Orders'}</p>
+            <p className="text-xs text-slate-400 font-bold">{isArabic ? 'الطلبات الجارية بالمناطق' : 'Total Active Orders'}</p>
             <p className="text-base font-black text-slate-800 dark:text-slate-100 mt-0.5">{summary.activeOrders}</p>
           </div>
         </div>

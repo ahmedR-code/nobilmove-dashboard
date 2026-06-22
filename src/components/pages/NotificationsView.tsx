@@ -112,7 +112,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ isArabic }
             <Bell size={16} />
           </div>
           <div>
-            <p className="text-[10px] text-slate-400 font-bold">{isArabic ? 'إجمالي الإشعارات' : 'Total Notifications'}</p>
+            <p className="text-xs text-slate-400 font-bold">{isArabic ? 'إجمالي الإشعارات' : 'Total Notifications'}</p>
             <p className="text-base font-black text-slate-800 dark:text-slate-100 mt-0.5">{notifications.length}</p>
           </div>
         </div>
@@ -122,7 +122,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ isArabic }
             <Mail size={16} className="animate-bounce" />
           </div>
           <div>
-            <p className="text-[10px] text-slate-400 font-bold">{isArabic ? 'إشعارات غير مقروءة' : 'Unread Alerts'}</p>
+            <p className="text-xs text-slate-400 font-bold">{isArabic ? 'إشعارات غير مقروءة' : 'Unread Alerts'}</p>
             <p className="text-base font-black text-slate-800 dark:text-slate-100 mt-0.5">{unreadCount}</p>
           </div>
         </div>
@@ -132,7 +132,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ isArabic }
             <CheckCircle size={16} />
           </div>
           <div>
-            <p className="text-[10px] text-slate-400 font-bold">{isArabic ? 'إشعارات مقروءة' : 'Read History'}</p>
+            <p className="text-xs text-slate-400 font-bold">{isArabic ? 'إشعارات مقروءة' : 'Read History'}</p>
             <p className="text-base font-black text-slate-800 dark:text-slate-100 mt-0.5">{notifications.length - unreadCount}</p>
           </div>
         </div>
@@ -158,7 +158,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ isArabic }
 
           {/* Filtering buttons */}
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-[10px] font-bold">
+            <div className="flex p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-bold">
               {([
                 { key: 'all', ar: 'الكل', en: 'All' },
                 { key: 'unread', ar: 'غير مقروءة', en: 'Unread' },
@@ -219,7 +219,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ isArabic }
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
                       {notif.body}
                     </p>
-                    <p className="text-[10px] text-slate-400 mt-2 font-semibold">
+                    <p className="text-xs text-slate-400 mt-2 font-semibold">
                       {notif.time}
                     </p>
                   </div>
